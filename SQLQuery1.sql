@@ -22,12 +22,12 @@
 
 -- Calculate number of order by Region
 , number_order_by_region as (
-select distinct 
-t.Region,
-count (*) as num
-from all_sales c
-left join territories t on t.SalesTerritoryKey = c.TerritoryKey
-group by t.Region
+	select distinct 
+		t.Region,
+		count (*) as num
+	from all_sales c
+	left join territories t on t.SalesTerritoryKey = c.TerritoryKey
+	group by t.Region
 )
 
 --Join return_table to get return quantity
@@ -41,9 +41,8 @@ select
 	r.ReturnQuantity, 
 	r.ReturnDate
 from all_sales s
-left join returns_table r
-	on s.ProductKey = r.ProductKey
-	and s.TerritoryKey = r.TerritoryKey
+left join returns_table r on s.ProductKey = r.ProductKey
+				and s.TerritoryKey = r.TerritoryKey
 )	
 	
 	
@@ -66,7 +65,7 @@ group by ProductKey, TerritoryKey
 
 
 -- Calculate return rate by productkey
-;With summary (ProductKey, TerritoryKey, order_number, return_number, return_qty) as(
+;with summary (ProductKey, TerritoryKey, order_number, return_number, return_qty) as(
 	select 
 		order_groupby.*,
 		re.return_number,
@@ -85,14 +84,13 @@ group by ProductKey, TerritoryKey
 			r1.TerritoryKey, 
 			SUM(cast(r1.ReturnQuantity as int)) as return_number
 		from returns_table r1
-		group by r1.ProductKey, r1.TerritoryKey ) as re
-		on order_groupby.ProductKey = re.ProductKey
-		and order_groupby.TerritoryKey = re.TerritoryKey
+		group by r1.ProductKey, r1.TerritoryKey ) as re on order_groupby.ProductKey = re.ProductKey
+								and order_groupby.TerritoryKey = re.TerritoryKey
 )
 
 -- Create table for visualization
-Drop table if exists #product
-Create table #product (
+drop table if exists #product
+create table #product (
 	ProductKey numeric,
 	order_number numeric, 
 	return_qty numeric,  
