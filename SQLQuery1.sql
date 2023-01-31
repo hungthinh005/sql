@@ -12,6 +12,7 @@ union
 	from sales_2017
 )
 
+
 -- Find number of order by productkey
 
 select 
@@ -22,6 +23,7 @@ from all_sales
 group by all_sales.ProductKey, all_sales.TerritoryKey
 
 --Join return_table to get return quantity
+
 
 select 
 	s.OrderDate, 
@@ -37,17 +39,18 @@ left join returns_table r
 	and s.TerritoryKey = r.TerritoryKey
 
 
+
 -- Calculate return rate by productkey
 ;With product_summary (ProductKey, TerritoryKey, order_number, return_number, return_qty) as(
 	select 
 		order_groupby.*,
 		re.return_number,
-		case when re.return_number > 0 then re.return_number else 0 end as return_qty -- Replace null value by 0
+		case when re.return_number > 0 then re.return_number else 0 end as return_qty
 	from (	
 		select 
 			s1.ProductKey, 
 			s1.TerritoryKey, 
-			SUM(cast(s1.OrderQuantity as int)) as order_number -- Get number of order by productkey
+			SUM(cast(s1.OrderQuantity as int)) as order_number
 		from all_sales s1
 		group by s1.ProductKey, s1.TerritoryKey
 		) as order_groupby
@@ -55,7 +58,7 @@ left join returns_table r
 		select 
 			r1.ProductKey, 
 			r1.TerritoryKey, 
-			SUM(cast(r1.ReturnQuantity as int)) as return_number -- Get number of return by productkey
+			SUM(cast(r1.ReturnQuantity as int)) as return_number
 		from returns_table r1
 		group by r1.ProductKey, r1.TerritoryKey ) as re
 		on order_groupby.ProductKey = re.ProductKey
@@ -65,7 +68,7 @@ select
 	ps.ProductKey,
 	ps.order_number, 
 	ps.return_qty,  
-	(return_qty/order_number)*100 as return_rate, -- calculate return rate
+	(return_qty/order_number)*100 as return_rate,
 	p.ProductSKU, 
 	p.ProductName, 
 	p.ModelName, 
