@@ -2,28 +2,54 @@
 -- Union Sales 2015 with Sales 2016 and Sales 2017
 
 ;with all_sales as(
-	select * 
-	from sales_2015
+select * 
+from sales_2015
 union
-	select * 
-	from sales_2016
+select * 
+from sales_2016
 union
-	select * 
-	from sales_2017
+select * 
+from sales_2017
 )
+
+-- Calculate total order of all_sales
+, total_order as (
+select
+count(*) as total
+from 
+all_sales
+)
+
+-- Calculate number of order by Region
+, number_order_by_region as (
+select distinct 
+t.Region,
+count (*) as num
+from all_sales c
+left join territories t on t.SalesTerritoryKey = c.TerritoryKey
+cross join total_order tot
+group by t.Region, tot.total
+)
+
+-- Find Percentage of order by Region
+
+select 
+*,
+cast(nu.num as float)/cast(total_order.total as float)*100 as 'percentage'
+from number_order_by_region nu
+cross join total_order 
 
 
 -- Find number of order by productkey
 
 select 
-	all_sales.ProductKey, 
-	all_sales.TerritoryKey, 
-	SUM(cast(all_sales.OrderQuantity as int)) as order_number
+	ProductKey, 
+	TerritoryKey, 
+	SUM(cast(OrderQuantity as int)) as order_number
 from all_sales
-group by all_sales.ProductKey, all_sales.TerritoryKey
+group by ProductKey, TerritoryKey
 
 --Join return_table to get return quantity
-
 
 select 
 	s.OrderDate, 
