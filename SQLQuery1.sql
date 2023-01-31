@@ -1,7 +1,7 @@
 
 
 -- Union Sales 2015 with Sales 2016 and Sales 2017
-;with all_sales as(
+with all_sales as(
 	select * 
 	from sales_2015
 	union
