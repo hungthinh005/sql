@@ -66,7 +66,7 @@ group by ProductKey, TerritoryKey
 
 
 -- Calculate return rate by productkey
-;With product_summary (ProductKey, TerritoryKey, order_number, return_number, return_qty) as(
+;With summary (ProductKey, TerritoryKey, order_number, return_number, return_qty) as(
 	select 
 		order_groupby.*,
 		re.return_number,
@@ -115,10 +115,10 @@ insert into #product
 		p.ModelName, 
 		p.ProductCost, 
 		p.ProductPrice
-	from product_summary ps
+	from summary ps
 	left join products p 
 		on ps.ProductKey = p.ProductKey
-	order by 4 asc
+	order by 1 asc
 
 
 select * from #product
@@ -134,7 +134,7 @@ create view product as
 		p.ModelName, 
 		p.ProductCost, 
 		p.ProductPrice
-	from product_summary ps
+	from summary ps
 	left join products p 
 		on ps.ProductKey = p.ProductKey
-	order by 4 asc
+	order by 1 asc
