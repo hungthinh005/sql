@@ -1,23 +1,23 @@
 
--- Union Sales 2015 with Sales 2016 and Sales 2017
 
+-- Union Sales 2015 with Sales 2016 and Sales 2017
 ;with all_sales as(
-select * 
-from sales_2015
-union
-select * 
-from sales_2016
-union
-select * 
-from sales_2017
+	select * 
+	from sales_2015
+	union
+	select * 
+	from sales_2016
+	union
+	select * 
+	from sales_2017
 )
 
 -- Calculate total order of all_sales
 , total_order as (
-select
-count(*) as total
-from 
-all_sales
+	select
+	count(*) as total
+	from 
+	all_sales
 )
 
 -- Calculate number of order by Region
@@ -27,30 +27,11 @@ t.Region,
 count (*) as num
 from all_sales c
 left join territories t on t.SalesTerritoryKey = c.TerritoryKey
-cross join total_order tot
-group by t.Region, tot.total
+group by t.Region
 )
 
--- Find Percentage of order by Region
-
-select 
-*,
-cast(nu.num as float)/cast(total_order.total as float)*100 as 'percentage'
-from number_order_by_region nu
-cross join total_order 
-
-
--- Find number of order by productkey
-
-select 
-	ProductKey, 
-	TerritoryKey, 
-	SUM(cast(OrderQuantity as int)) as order_number
-from all_sales
-group by ProductKey, TerritoryKey
-
 --Join return_table to get return quantity
-
+, return_sale as (
 select 
 	s.OrderDate, 
 	s.StockDate, 
@@ -63,7 +44,25 @@ from all_sales s
 left join returns_table r
 	on s.ProductKey = r.ProductKey
 	and s.TerritoryKey = r.TerritoryKey
+)	
+	
+	
+-- Find Percentage of order by Region
+select 
+*,
+cast(nu.num as float)/cast(total_order.total as float)*100 as 'percentage'
+from number_order_by_region nu
+cross join total_order 
 
+
+
+-- Find number of order by productkey
+select 
+	ProductKey, 
+	TerritoryKey, 
+	SUM(cast(OrderQuantity as int)) as order_number
+from all_sales
+group by ProductKey, TerritoryKey
 
 
 -- Calculate return rate by productkey
@@ -71,7 +70,7 @@ left join returns_table r
 	select 
 		order_groupby.*,
 		re.return_number,
-		case when re.return_number > 0 then re.return_number else 0 end as return_qty
+		(case when re.return_number > 0 then re.return_number else 0 end) as return_qty
 	from (	
 		select 
 			s1.ProductKey, 
@@ -90,17 +89,52 @@ left join returns_table r
 		on order_groupby.ProductKey = re.ProductKey
 		and order_groupby.TerritoryKey = re.TerritoryKey
 )
-select 
-	ps.ProductKey,
-	ps.order_number, 
-	ps.return_qty,  
-	(return_qty/order_number)*100 as return_rate,
-	p.ProductSKU, 
-	p.ProductName, 
-	p.ModelName, 
-	p.ProductCost, 
-	p.ProductPrice
-from product_summary ps
-left join products p 
-	on ps.ProductKey = p.ProductKey
-order by 4 asc
+
+-- Create table for visualization
+Drop table if exists #product
+Create table #product (
+	ProductKey numeric,
+	order_number numeric, 
+	return_qty numeric,  
+	return_rate numeric,
+	ProductSKU varchar(50), 
+	ProductName varchar(50), 
+	ModelName varchar(50), 
+	ProductCost numeric, 
+	ProductPrice numeric
+)
+
+insert into #product
+	select 
+		ps.ProductKey,
+		ps.order_number, 
+		ps.return_qty,  
+		(cast(return_qty as float)/cast(order_number as float))*100 as return_rate,
+		p.ProductSKU, 
+		p.ProductName, 
+		p.ModelName, 
+		p.ProductCost, 
+		p.ProductPrice
+	from product_summary ps
+	left join products p 
+		on ps.ProductKey = p.ProductKey
+	order by 4 asc
+
+
+select * from #product
+
+create view product as
+	select 
+		ps.ProductKey,
+		ps.order_number, 
+		ps.return_qty,  
+		(cast(return_qty as float)/cast(order_number as float))*100 as return_rate,
+		p.ProductSKU, 
+		p.ProductName, 
+		p.ModelName, 
+		p.ProductCost, 
+		p.ProductPrice
+	from product_summary ps
+	left join products p 
+		on ps.ProductKey = p.ProductKey
+	order by 4 asc
